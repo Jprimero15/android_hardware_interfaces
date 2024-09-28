@@ -62,9 +62,7 @@ template <typename Iface>
 std::vector<std::string> getNames(std::vector<std::shared_ptr<Iface>>& ifaces) {
     std::vector<std::string> names;
     for (const auto& iface : ifaces) {
-        if (iface) {
-            names.emplace_back(iface->getName());
-        }
+        names.emplace_back(iface->getName());
     }
     return names;
 }
@@ -106,17 +104,8 @@ std::vector<std::string> getPredefinedApIfaceNames(bool is_bridged) {
     std::vector<std::string> ifnames;
     std::array<char, PROPERTY_VALUE_MAX> buffer;
     buffer.fill(0);
-    property_get("vendor.wifi.lohs.sap.iface.inuse", buffer.data(), "false");
-    if (strcmp(buffer.data(),"true") == 0) {
-        buffer.fill(0);
-        if (property_get("vendor.wifi.lohs.sap.interface", buffer.data(), nullptr) == 0) {
-            return ifnames;
-        }
-    } else {
-        buffer.fill(0);
-        if (property_get("ro.vendor.wifi.sap.interface", buffer.data(), nullptr) == 0) {
-            return ifnames;
-        }
+    if (property_get("ro.vendor.wifi.sap.interface", buffer.data(), nullptr) == 0) {
+        return ifnames;
     }
     ifnames.push_back(buffer.data());
     if (is_bridged) {
@@ -982,10 +971,6 @@ std::pair<std::shared_ptr<IWifiNanIface>, ndk::ScopedAStatus> WifiChip::createNa
     }
     std::shared_ptr<WifiNanIface> iface =
             WifiNanIface::create(ifname, is_dedicated_iface, legacy_hal_, iface_util_);
-    if (!iface) {
-        LOG(ERROR) << "Unable to create NAN iface";
-        return {nullptr, createWifiStatus(WifiStatusCode::ERROR_UNKNOWN)};
-    }
     nan_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
         if (!callback->onIfaceAdded(IfaceType::NAN_IFACE, ifname).isOk()) {
